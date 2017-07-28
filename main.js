@@ -1,93 +1,130 @@
-document.addEventListener("DOMContentLoaded", function() {
-var startButton = document.querySelector('.start_button');
+var startButton = document.querySelector('.start_button'); // wybieram elment HTML po klasie
 var gameContainer = document.querySelector('.game_container');
-var item_count = 16; 
-var imagesIds = [];
-var selectImagesIds = []; 
-
-
-//    <!--<div class="card unresolved">
-//         <img src="https://unsplash.it/200/200?image=123" alt="karta">
-//       </div>-->
+var ITEMS_COUNT = 16; // Liczba elementow gry = wielkosc tablicy
+var imagesIds = []; // Tablica przetrzumujaca wylosowane ID wykorzystane w grze
+var prevSelectedElem; // Poprzednio wybrany element DOM
+var selectedImagesIds = []; // Tabliac wybranych elementow
 
 function onClickCard(event) {
-    event.target.classList.remove('unresolved');
+    var imageId = event.target.dataset.image; // pobierz id wybranego obrazka
+    event.target.classList.remove('unresolved'); // usun classe unresolved
+    
+    //jezeli jest to pierwszy wybrany obrazek
+    if (selectedImagesIds.length === 0) {
+        prevSelectedElem = event.target; // pobierz klikniety element i zapisujemy go
+        return selectedImagesIds.push(imageId); // dodaj id obrazka do listy obrazow wybranych(do naszej tablicy wybranoch elementow)
+    } else if (selectedImagesIds[0] && selectedImagesIds[0] === imageId) {
+        // Jezeli wczesniej byl wybrany juz obraz ( selectedImagesIds[0] )
+        // I id obrazka poprzedniego i aktualnie wybranego są rowne
 
-    if (selectImagesIds.length === 0) {
-        return selectImagesIds.push(imageId);
-    } else if (selectImagesIds[0] && selectImagesIds[0] === imageId) {
-        alert('match');
-        setTimeout(function ( {
-            
-        })
-        event.target.classList.add('resolved');
+        setTimeout(function() { alert("Match"); }, 2000);//wyswietl komunikat o poprawnym wyborze 
 
+        setTimeout(function () {
+            event.target.classList.add('resolved'); // dodaj klase do aktualnie wybranego
+            prevSelectedElem.classList.add('resolved'); // dodaj klase do poprzednio wybranego
+        }, 1000)
+    } else if (selectedImagesIds[0] && selectedImagesIds[0] !== imageId) {
+        // Jezeli wczesniej byl wybrany juz obraz ( selectedImagesIds[0] )
+        // I id obrazka poprzedniego i aktualnie wybranego są rozne
+        selectedImagesIds = []; // wyzeruj liste poprzednio wybranych obrazkow
+        setTimeout(function () {
+            event.target.classList.add('unresolved'); // dodaj klase do aktualnie wybranego
+            prevSelectedElem.classList.add('unresolved');// dodaj klase do poprzednio wybranego
+        }, 1000)
     }
 }
 
+/**
+ * Funkcja generuje jedna karte
+ * wraz z klasami
+ * oraz event listenerem
+ * @param {Integer} index 
+ */
+function addCard(index) {
+    var containerCard = document.createElement('div'); // utworz kontener dla karty
+    var image = document.createElement('img'); // utworz element DOM dla obrazka
+    containerCard.classList.add('card'); // dodaj odpowiednie klasy
+    containerCard.classList.add('unresolved'); // od poczatku karta jest w stanie 'unresolved'
 
-function addCard (index) {
-    var containerCard = document.createElement('div');
-    var image = document.createElement('img');
+    // dodajemy obrazek z wylosowanym id
+    image.src = 'https://unsplash.it/150/150?image=' + imagesIds[index]; 
 
-    containerCard.classList.add('card');
-    containerCard.classList.add('unresolved');
+    containerCard.dataset.image = imagesIds[index]; // dodaj id do data set
+    containerCard.appendChild(image); // dodaj DOM img do kontenera
+    gameContainer.appendChild(containerCard); // dodaj kontener do pola gry
 
-    //add src to img 
-    image.src = "https://unsplash.it/200/200?image=" + imagesIds[index];
-
-    //dodaje data imges 
-    containerCard.dataset.image = imagesIds[index];
-    containerCard.appendChild(image);
-    gameContainer.appendChild(containerCard);
-    containerCard.addEventListener('clik', onClickCard);
+    containerCard.addEventListener('click', onClickCard);  // dodaj listener na klikniecie w karte ????
 }
 
+/**
+ * Funkcja generuje i osadza w DOM zadana liczbe kart do gry
+ */
 function createCards() {
-    for (var i=0; i < item_count; i++) {
-            addCard(i);
+    for(var i = 0; i < ITEMS_COUNT; i++) {
+        addCard(i);
     }
 }
 
+/**
+ * Losowanie wartosci Id dla obrazka
+ * w przedziale od 1 do 500
+ */
 function randomImageId() {
+    // Math.random() - zwraca wartosc od 0...1
+    // Math.floor() - zaokragla wartosc w dol do najblizszej liczby calkowitej
     return Math.floor(1 + (Math.random() * 1000) % 499);
 }
 
-
+/**
+ * Funkcja mieszajaca kolejnoscia elementy w tablicy
+ * @param {Array} a 
+ */
 function shuffle(a) {
     var j, x, i;
-        for (i = a.length; i; i--) {
-            j = Math.floor(Math.random() * i);
-            x = a[i - 1];
-            a[i - 1] = a[j];
-            a[j] = x;
-        }
+    for (i = a.length; i; i--) {
+        j = Math.floor(Math.random() * i);
+        x = a[i - 1];
+        a[i - 1] = a[j];
+        a[j] = x;
+    }
 }
 
-// dupikujemy tablice zeby miec po dwa id 
-function duplicateArray(arr){
-    return arr.concat(arr.slice());
+function duplicateArray(arr) {
+    return arr.concat(arr.slice()); // polacz tablice (concat) arr z kopia samej siebie (slice)
 }
 
 function randomImages() {
-    for (var i = 0; i < item_count / 2; i++) {
+    /**
+     * Losujemy ID dla 8 obrazków (ITEMS_COUNT / 2)
+     */    
+    for (var i = 0; i < ITEMS_COUNT / 2; i++) {
         var id;
         
         do {
-            id = randomImageId();
-        } while (imagesIds.indexOf(id) >= 0);
+            id = randomImageId(); // losuj ID dla jednego obrazu
+        } while (imagesIds.indexOf(id) >= 0); // sprawdz czy wczesniej nie zostal wylosowany ????
 
-        imagesIds.push(id);
+        imagesIds.push(id); // dodaj wylosowany id do listy
     }
 
-    imagesIds = duplicateArray(imagesIds);
-    shuffle(imagesIds);
+    imagesIds = duplicateArray(imagesIds); // powielamy liste
+    shuffle(imagesIds); // mieszamy kolejnoscia elementy w zduplikowanej liscie
 }
 
+/**
+ * Start button on click handler
+ */
+startButton.addEventListener('click', function () {
+    randomImages(); // Wylosuj obrazki do gry
+    createCards(); // generuj karty
+})
 
-    startButton.addEventListener('click', function () {
-        randomImages();
-        createCards();
-    })
-});
 
+/*DODAC 
+1. Zabezpieczenie kodu aby nie było możliwe wielokrotnie naciśnięcie przycisku "Start".
+2. Zabezpieczenie aby nie można było wybrać innej karty w czasie 1 sek, podczas odliczania timer-a 
+(setTimeout).
+3. Zliczanie punktów (ruchów).
+4. Możliwość zmiany wielkości tablicy do gry.
+5. Odpowiednia wiadomość po odgadnięciu wszystkich kart.
+*/
